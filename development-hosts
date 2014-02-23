@@ -1,0 +1,17 @@
+[development_machine]
+192.168.33.10  mongod_port=2700 ansible_ssh_user=vagrant testing=true ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
+
+[mongo_servers:children]
+development_machine
+
+[replication_servers:children]
+development_machine
+
+#The list of mongodb configuration servers, make sure it is 1 or 3
+[mongoc_servers:children]
+development_machine
+
+#The list of servers where mongos servers would run.
+[mongos_servers:children]
+development_machine
+

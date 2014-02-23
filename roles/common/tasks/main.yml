@@ -1,0 +1,58 @@
+---
+# This Playbook runs all the common plays in the deployment
+
+- name: Create the hosts file for all machines
+  template: src=hosts.j2 dest=/etc/hosts
+  sudo: yes
+
+- name: Create the repository for 10Gen
+  copy: src=10gen.repo.j2 dest=/etc/yum.repos.d/10gen.repo
+
+- name: Create the EPEL Repository.
+  copy: src=epel.repo.j2 dest=/etc/yum.repos.d/epel.repo
+
+- name: Create the GPG key for EPEL
+  copy: src=RPM-GPG-KEY-EPEL-6 dest=/etc/pki/rpm-gpg
+
+# - name: Create the GPG key for apt
+#   command: apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
+#   sudo: yes
+#
+# - name: Create apt/sources/mongodb.list
+#   copy: src=mongodb.list dest=/etc/apt/sources.list.d/
+#   sudo: yes
+#
+# - name: update apt
+#   apt: update_cache=yes
+#   sudo: yes
+
+- name: Create the mongod user
+  user: name=mongod comment="MongoD"
+  sudo: yes
+
+- name: Create the data directory for the namenode metadata
+  file: path={{ mongodb_datadir_prefix }} owner=mongod group=mongod state=directory
+  sudo: yes
+
+- name: Install the mongodb package
+  # apt: pkg={{ item }} state=present
+  yum: name={{ item }} state=installed
+  sudo: yes
+  with_items:
+   - vim
+   - lsof
+   - libselinux-python
+   - mongo-10gen
+   - mongo-10gen-server
+   - bc
+   - python-pip
+   # - mongodb-10gen
+
+- name: Install the latest pymongo package
+  pip: name=pymongo state=latest use_mirrors=no
+  sudo: yes
+
+- name: Create the iptables file
+  template: src=iptables.j2 dest=/etc/sysconfig/iptables
+  sudo: yes
+  notify: restart iptables
